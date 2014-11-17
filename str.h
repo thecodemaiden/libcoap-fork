@@ -11,11 +11,13 @@
 
 #include <string.h>
 
+#ifndef HAVE_STR
+#define HAVE_STR
 typedef struct {
   size_t length;		/* length of string */
   unsigned char *s;		/* string data */
 } str;
-
+#endif
 #define COAP_SET_STR(st,l,v) { (st)->length = (l), (st)->s = (v); }
 
 /**
