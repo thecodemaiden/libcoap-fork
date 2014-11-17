@@ -6,18 +6,18 @@
 # README for terms of use. 
 
 # the library's version
-VERSION:=@PACKAGE_VERSION@
+VERSION:=4.1.1
 
 # tools
-@SET_MAKE@
-RANLIB=@RANLIB@
+
+RANLIB=ranlib
 SHELL = /bin/sh
 MKDIR = mkdir
-ETAGS = @ETAGS@
+ETAGS = /usr/bin/etags
 
-abs_builddir = @abs_builddir@
-top_builddir = @top_builddir@
-package = @PACKAGE_TARNAME@-@PACKAGE_VERSION@
+abs_builddir = /Users/abannis/REMAP/libcoap-4.1.1
+top_builddir = .
+package = libcoap-4.1.1
 
 # files and flags
 SOURCES:= pdu.c net.c debug.c encode.c uri.c coap_list.c resource.c hashkey.c \
@@ -26,18 +26,18 @@ OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 HEADERS:=coap.h config.h debug.h pdu.h net.h encode.h uri.h coap_list.h mem.h \
 	str.h option.h bits.h uthash.h utlist.h resource.h hashkey.h async.h \
 	subscribe.h block.h address.h prng.h coap_time.h t_list.h
-CFLAGS:=-Wall -Wextra -std=c99 -pedantic @CFLAGS@
-CPPFLAGS:=@CPPFLAGS@
+CFLAGS:=-Wall -Wextra -std=c99 -pedantic -g -O2
+CPPFLAGS:= -DWITH_POSIX
 DISTDIR=$(top_builddir)/$(package)
 SUBDIRS:=examples doc tests
 FILES:=ChangeLog README LICENSE.BSD LICENSE.GPL Makefile.in configure configure.in config.h.in $(SOURCES) $(HEADERS)
 LIB:=libcoap.a
 LDSOFLAGS=-shared
-LDFLAGS:=@LIBS@
+LDFLAGS:=
 ARFLAGS:=cru
 examples:=examples
 doc:=doc
-@BUILD_SO@
+
 
 ifdef BUILD_SO
   MACHINE?=$(shell $(CC) -dumpmachine)

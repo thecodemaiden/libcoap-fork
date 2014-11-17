@@ -1,7 +1,7 @@
 /* coap -- simple implementation of the Constrained Application Protocol (CoAP)
  *         as defined in draft-ietf-core-coap
  *
- * Copyright (C) 2010--2014 Olaf Bergmann <bergmann@tzi.org>
+ * Copyright (C) 2010--2013 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
  * README for terms of use. 
@@ -58,7 +58,6 @@ handle_sigint(int signum) {
 
 void 
 hnd_get_index(coap_context_t  *ctx, struct coap_resource_t *resource, 
-	      const coap_endpoint_t *local_interface,
 	      coap_address_t *peer, coap_pdu_t *request, str *token,
 	      coap_pdu_t *response) {
   unsigned char buf[3];
@@ -75,8 +74,7 @@ hnd_get_index(coap_context_t  *ctx, struct coap_resource_t *resource,
 }
 
 void 
-hnd_get_time(coap_context_t  *ctx, struct coap_resource_t *resource,
-	     const coap_endpoint_t *local_interface,
+hnd_get_time(coap_context_t  *ctx, struct coap_resource_t *resource, 
 	     coap_address_t *peer, coap_pdu_t *request, str *token,
 	     coap_pdu_t *response) {
   coap_opt_iterator_t opt_iter;
@@ -85,6 +83,7 @@ hnd_get_time(coap_context_t  *ctx, struct coap_resource_t *resource,
   size_t len;
   time_t now;
   coap_tick_t t;
+  coap_subscription_t *subscription;
 
   /* FIXME: return time, e.g. in human-readable by default and ticks
    * when query ?ticks is given. */
@@ -93,12 +92,19 @@ hnd_get_time(coap_context_t  *ctx, struct coap_resource_t *resource,
   response->hdr->code = 
     my_clock_base ? COAP_RESPONSE_CODE(205) : COAP_RESPONSE_CODE(404);
 
-  if (coap_find_observer(resource, peer, token)) {
-    /* FIXME: need to check for resource->dirty? */
+  if (request != NULL &&
+      coap_check_option(request, COAP_OPTION_OBSERVE, &opt_iter)) {
+    subscription = coap_add_observer(resource, peer, token);
+    if (subscription) {
+      subscription->non = request->hdr->type == COAP_MESSAGE_NON;
+      coap_add_option(response, COAP_OPTION_OBSERVE, 0, NULL);
+    }
+  }
+  if (resource->dirty == 1)
     coap_add_option(response, COAP_OPTION_OBSERVE, 
 		    coap_encode_var_bytes(buf, ctx->observe), buf);
-  }
 
+    
   if (my_clock_base)
     coap_add_option(response, COAP_OPTION_CONTENT_FORMAT,
 		    coap_encode_var_bytes(buf, COAP_MEDIATYPE_TEXT_PLAIN), buf);
@@ -134,8 +140,7 @@ hnd_get_time(coap_context_t  *ctx, struct coap_resource_t *resource,
 }
 
 void 
-hnd_put_time(coap_context_t  *ctx, struct coap_resource_t *resource,
-	     const coap_endpoint_t *local_interface,
+hnd_put_time(coap_context_t  *ctx, struct coap_resource_t *resource, 
 	     coap_address_t *peer, coap_pdu_t *request, str *token,
 	     coap_pdu_t *response) {
   coap_tick_t t;
@@ -167,10 +172,9 @@ hnd_put_time(coap_context_t  *ctx, struct coap_resource_t *resource,
 }
 
 void 
-hnd_delete_time(coap_context_t  *ctx, struct coap_resource_t *resource,
-		const coap_endpoint_t *local_interface,
-		coap_address_t *peer, coap_pdu_t *request, str *token,
-		coap_pdu_t *response) {
+hnd_delete_time(coap_context_t  *ctx, struct coap_resource_t *resource, 
+	      coap_address_t *peer, coap_pdu_t *request, str *token,
+	      coap_pdu_t *response) {
   my_clock_base = 0;		/* mark clock as "deleted" */
   
   /* type = request->hdr->type == COAP_MESSAGE_CON  */
@@ -178,9 +182,8 @@ hnd_delete_time(coap_context_t  *ctx, struct coap_resource_t *resource,
 }
 
 #ifndef WITHOUT_ASYNC
-void
-hnd_get_async(coap_context_t  *ctx, struct coap_resource_t *resource,
-	      const coap_endpoint_t *local_interface,
+void 
+hnd_get_async(coap_context_t  *ctx, struct coap_resource_t *resource, 
 	      coap_address_t *peer, coap_pdu_t *request, str *token,
 	      coap_pdu_t *response) {
   coap_opt_iterator_t opt_iter;
@@ -212,12 +215,11 @@ hnd_get_async(coap_context_t  *ctx, struct coap_resource_t *resource,
 }
 
 void 
-check_async(coap_context_t  *ctx, const coap_endpoint_t *local_if,
-	    coap_tick_t now) {
+check_async(coap_context_t  *ctx, coap_tick_t now) {
   coap_pdu_t *response;
   coap_async_state_t *tmp;
 
-  size_t size = sizeof(coap_hdr_t) + 13;
+  size_t size = sizeof(coap_hdr_t) + 8;
 
   if (!async || now < async->created + (unsigned long)async->appdata) 
     return;
@@ -240,7 +242,7 @@ check_async(coap_context_t  *ctx, const coap_endpoint_t *local_if,
 
   coap_add_data(response, 4, (unsigned char *)"done");
 
-  if (coap_send(ctx, local_if, &async->peer, response) == COAP_INVALID_TID) {
+  if (coap_send(ctx, &async->peer, response) == COAP_INVALID_TID) {
     debug("check_async: cannot send response for message %d\n", 
 	  response->hdr->id);
   }
@@ -419,7 +421,7 @@ main(int argc, char **argv) {
     } else if ( result > 0 ) {	/* read from socket */
       if ( FD_ISSET( ctx->sockfd, &readfds ) ) {
 	coap_read( ctx );	/* read received data */
-	/* coap_dispatch( ctx );	/\* and dispatch PDUs from receivequeue *\/ */
+	coap_dispatch( ctx );	/* and dispatch PDUs from receivequeue */
       }
     } else {			/* timeout */
       if (time_resource) {
@@ -429,7 +431,7 @@ main(int argc, char **argv) {
 
 #ifndef WITHOUT_ASYNC
     /* check if we have to send asynchronous responses */
-    check_async(ctx, ctx->endpoint, now);
+    check_async(ctx, now);
 #endif /* WITHOUT_ASYNC */
 
 #ifndef WITHOUT_OBSERVE

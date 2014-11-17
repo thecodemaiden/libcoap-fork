@@ -43,7 +43,7 @@
 
 /** Definition of message handler function (@sa coap_resource_t). */
 typedef void (*coap_method_handler_t)
-  (coap_context_t  *, struct coap_resource_t *, const coap_endpoint_t *, coap_address_t *, coap_pdu_t *,
+  (coap_context_t  *, struct coap_resource_t *, coap_address_t *, coap_pdu_t *,
    str * /* token */, coap_pdu_t * /* response */);
 
 #define COAP_ATTR_FLAGS_RELEASE_NAME  0x1
@@ -272,7 +272,6 @@ void coap_hash_request_uri(const coap_pdu_t *request, coap_key_t key);
  *        @c NULL on error.
  */
 coap_subscription_t *coap_add_observer(coap_resource_t *resource, 
-				       const coap_endpoint_t *local_interface,
 				       const coap_address_t *observer,
 				       const str *token);
 
@@ -303,16 +302,14 @@ void coap_touch_observer(coap_context_t *context,
 
 /**
  * Removes any subscription for @p observer from @p resource and releases
- * the allocated storage. The result is @c 1 if an observation relationship
- * with @p observer and @p token existed, @c 0 otherwise.
+ * the allocated storage.
  *
  * @param resource The observed resource.
  * @param observer The observer's address.
  * @param token    The token that identifies this subscription or @c NULL for any
  *                 token.
- * @return @c 1 if the observer has been deleted, @c 0 otherwise.
  */
-int coap_delete_observer(coap_resource_t *resource, 
+void coap_delete_observer(coap_resource_t *resource, 
 			  const coap_address_t *observer, 
 			  const str *token);
 
@@ -323,16 +320,5 @@ int coap_delete_observer(coap_resource_t *resource,
 void coap_check_notify(coap_context_t *context);
 
 /** @} */
-
-typedef struct coap_iterator_t {
-  void *data;			/**< opaque iterator state */
-  unsigned int pos;		/**< current item number */
-} coap_iterator_t ;
-
-coap_iterator_t *
-coap_resource_iterator_init(coap_resource_t *resources,
-			    coap_iterator_t *ri);
-
-coap_resource_t *coap_resource_next(coap_iterator_t *ri);
 
 #endif /* _COAP_RESOURCE_H_ */

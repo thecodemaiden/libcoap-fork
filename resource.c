@@ -35,43 +35,9 @@
   ((coap_##Type##_t *)coap_malloc(sizeof(coap_##Type##_t)))
 #define COAP_FREE_TYPE(Type, Object) coap_free(Object)
 
-coap_iterator_t *
-coap_iterator_init(void *storage, coap_iterator_t *ri) {
-  assert(storage);
-  assert(ri);
-  
-  ri->data = storage;
-  ri->pos  = 0;
-
-  return ri;
-}
-
-struct thing {
-  struct thing *next;
-};
-
-void *
-coap_iterator_next(coap_iterator_t *ri) {
-  void *item;
-  assert(ri);
-
-  item = ri->data;
-
-  if (ri->data != NULL) {
-    ri->data = ((struct thing *)ri->data)->next;
-  }
-
-  return item;
-}
-
 #endif /* WITH_POSIX */
 #ifdef WITH_CONTIKI
-#include "mem.h"
 #include "memb.h"
-
-#define COAP_MALLOC_TYPE(Type) \
-  ((coap_##Type##_t *)memb_alloc(&(Type##_storage)))
-#define COAP_FREE_TYPE(Type, Object) memb_free(&(Type##_storage), (Object))
 
 MEMB(resource_storage, coap_resource_t, COAP_MAX_RESOURCES);
 MEMB(attribute_storage, coap_attr_t, COAP_MAX_ATTRIBUTES);
@@ -93,49 +59,6 @@ static inline void
 coap_free_subscription(coap_subscription_t *subscription) {
   memb_free(&subscription_storage, subscription);
 }
-
-coap_iterator_t *
-coap_iterator_init(void *storage, coap_iterator_t *ri) {
-  assert(storage);
-  assert(ri);
-  
-  ri->data = storage;
-  ri->pos  = 0;
-
-  return ri;
-}
-
-void *
-coap_iterator_next(coap_iterator_t *ri) {
-  struct memb *m;
-  void *result = NULL;
-
-  assert(ri);
-
-  m = (struct memb *)ri->data;
-
-  while (!result && (ri->pos < m->num)) {
-    if (m->count[ri->pos]) {
-      result = (void *)((char *)m->mem + (ri->pos * m->size));
-    }
-    ++ri->pos;
-  }
-  
-  return result;
-}
-
-coap_iterator_t *
-coap_resource_iterator_init(struct coap_resource_t *resources, 
-			    coap_iterator_t *ri) {
-  /* For Contiki, the resources component of coap_context_t is not used... */
-  return coap_iterator_init(&resource_storage, ri);
-}
-
-coap_resource_t *
-coap_resource_next(coap_iterator_t *ri) {
-  return (coap_resource_t *)coap_iterator_next(ri);
-}
-
 #endif /* WITH_CONTIKI */
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -486,14 +409,14 @@ coap_delete_attr(coap_attr_t *attr) {
     coap_free(attr->name.s);
   if (attr->flags & COAP_ATTR_FLAGS_RELEASE_VALUE)
     coap_free(attr->value.s);
-#ifdef WITH_POSIX
+#ifdef POSIX
   coap_free(attr);
 #endif
 #ifdef WITH_LWIP
   memp_free(MEMP_COAP_RESOURCEATTR, attr);
 #endif
 #ifdef WITH_CONTIKI
-  memb_free(&attribute_storage, attr);
+  /* FIXME it looks like this was never implemented */
 #endif
 }
 
@@ -682,7 +605,6 @@ coap_find_observer(coap_resource_t *resource, const coap_address_t *peer,
 
 coap_subscription_t *
 coap_add_observer(coap_resource_t *resource, 
-		  const coap_endpoint_t *local_interface,
 		  const coap_address_t *observer,
 		  const str *token) {
   coap_subscription_t *s;
@@ -704,7 +626,6 @@ coap_add_observer(coap_resource_t *resource,
     return NULL;
 
   coap_subscription_init(s);
-  s->local_if = *local_interface;
   memcpy(&s->subscriber, observer, sizeof(coap_address_t));
   
   if (token && token->length) {
@@ -737,11 +658,9 @@ coap_touch_observer(coap_context_t *context, const coap_address_t *observer,
     }
   }
 #else /* WITH_CONTIKI */
-  coap_iterator_t resource_iter;
-
-  if (coap_resource_iterator_init(context->resources, &resource_iter) != NULL) {
-
-    while ((r = coap_resource_next(&resource_iter))) {
+  r = (coap_resource_t *)resource_storage.mem;
+  for (i = 0; i < resource_storage.num; ++i, ++r) {
+    if (resource_storage.count[i]) {
       s = coap_find_observer(r, observer, token);
       if (s) {
 	s->fail_cnt = 0;
@@ -751,7 +670,7 @@ coap_touch_observer(coap_context_t *context, const coap_address_t *observer,
 #endif /* WITH_CONTIKI */
 }
 
-int
+void
 coap_delete_observer(coap_resource_t *resource, const coap_address_t *observer,
 		     const str *token) {
   coap_subscription_t *s;
@@ -763,8 +682,6 @@ coap_delete_observer(coap_resource_t *resource, const coap_address_t *observer,
 
     COAP_FREE_TYPE(subscription,s);
   }
-
-  return s != NULL;
 }
 
 static void
@@ -816,16 +733,13 @@ coap_notify_observers(coap_context_t *context, coap_resource_t *r) {
 	response->hdr->type = COAP_MESSAGE_CON;
       }
       /* fill with observer-specific data */
-      h(context, r, &obs->local_if, &obs->subscriber, NULL, &token, response);
+      h(context, r, &obs->subscriber, NULL, &token, response);
 
-      /* TODO: do not send response and remove observer when 
-       *  COAP_RESPONSE_CLASS(response->hdr->code) > 2
-       */
       if (response->hdr->type == COAP_MESSAGE_CON) {
-	tid = coap_send_confirmed(context, &obs->local_if, &obs->subscriber, response);
+	tid = coap_send_confirmed(context, &obs->subscriber, response);
 	obs->non_cnt = 0;
       } else {
-	tid = coap_send(context, &obs->local_if, &obs->subscriber, response);
+	tid = coap_send(context, &obs->subscriber, response);
 	obs->non_cnt++;
       }
 

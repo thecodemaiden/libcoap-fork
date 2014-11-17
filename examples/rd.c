@@ -58,7 +58,7 @@ typedef struct rd_t {
 rd_t *resources = NULL;
 
 inline rd_t *
-rd_new(void) {
+rd_new() {
   rd_t *rd;
   rd = (rd_t *)coap_malloc(sizeof(rd_t));
   if (rd)
@@ -86,7 +86,6 @@ handle_sigint(int signum) {
 
 void 
 hnd_get_resource(coap_context_t  *ctx, struct coap_resource_t *resource, 
-	      const coap_endpoint_t *local_interface,
 	      coap_address_t *peer, coap_pdu_t *request, str *token,
 	      coap_pdu_t *response) {
   rd_t *rd = NULL;
@@ -108,7 +107,6 @@ hnd_get_resource(coap_context_t  *ctx, struct coap_resource_t *resource,
 
 void 
 hnd_put_resource(coap_context_t  *ctx, struct coap_resource_t *resource, 
-		 const coap_endpoint_t *local_interface,
 		 coap_address_t *peer, coap_pdu_t *request, str *token,
 		 coap_pdu_t *response) {
 #if 1
@@ -183,7 +181,6 @@ hnd_put_resource(coap_context_t  *ctx, struct coap_resource_t *resource,
 
 void 
 hnd_delete_resource(coap_context_t  *ctx, struct coap_resource_t *resource, 
-		    const coap_endpoint_t *local_interface,
 		    coap_address_t *peer, coap_pdu_t *request, str *token,
 		    coap_pdu_t *response) {
   rd_t *rd = NULL;
@@ -202,7 +199,6 @@ hnd_delete_resource(coap_context_t  *ctx, struct coap_resource_t *resource,
 
 void 
 hnd_get_rd(coap_context_t  *ctx, struct coap_resource_t *resource, 
-	      const coap_endpoint_t *local_interface,
 	      coap_address_t *peer, coap_pdu_t *request, str *token,
 	      coap_pdu_t *response) {
   unsigned char buf[3];
@@ -351,7 +347,6 @@ make_rd(coap_address_t *peer, coap_pdu_t *pdu) {
 
 void 
 hnd_post_rd(coap_context_t  *ctx, struct coap_resource_t *resource, 
-	    const coap_endpoint_t *local_interface,
 	      coap_address_t *peer, coap_pdu_t *request, str *token,
 	      coap_pdu_t *response) {
   coap_resource_t *r;
@@ -697,7 +692,7 @@ main(int argc, char **argv) {
     } else if ( result > 0 ) {	/* read from socket */
       if ( FD_ISSET( ctx->sockfd, &readfds ) ) {
 	coap_read( ctx );	/* read received data */
-	/* coap_dispatch( ctx );	/\* and dispatch PDUs from receivequeue *\/ */
+	coap_dispatch( ctx );	/* and dispatch PDUs from receivequeue */
       }
     } else {			/* timeout */
       /* coap_check_resource_list( ctx ); */

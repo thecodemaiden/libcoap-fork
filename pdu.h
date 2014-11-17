@@ -145,7 +145,6 @@ char *coap_response_phrase(unsigned char code);
 #define COAP_MEDIATYPE_APPLICATION_RDF_XML           43 /* application/rdf+xml */
 #define COAP_MEDIATYPE_APPLICATION_EXI               47 /* application/exi  */
 #define COAP_MEDIATYPE_APPLICATION_JSON              50 /* application/json  */
-#define COAP_MEDIATYPE_APPLICATION_CBOR              60 /* application/cbor  */
 
 /* Note that identifiers for registered media types are in the range 0-65535. We
  * use an unallocated type here and hope for the best. */
@@ -179,7 +178,7 @@ typedef struct {
 #define COAP_MESSAGE_IS_EMPTY(MSG)    ((MSG)->code == 0)
 #define COAP_MESSAGE_IS_REQUEST(MSG)  (!COAP_MESSAGE_IS_EMPTY(MSG)	\
 				       && ((MSG)->code < 32))
-#define COAP_MESSAGE_IS_RESPONSE(MSG) ((MSG)->code >= 64)
+#define COAP_MESSAGE_IS_RESPONSE(MSG) ((MSG)->code >= 64 && (MSG)->code <= 191)
 
 #define COAP_OPT_LONG 0x0F	/* OC == 0b1111 indicates that the option list in a
 				 * CoAP message is limited by 0b11110000 marker */
@@ -275,7 +274,7 @@ void coap_pdu_clear(coap_pdu_t *pdu, size_t size);
  * @deprecated This function allocates the maximum storage for each
  * PDU. Use coap_pdu_init() instead. 
  */
-coap_pdu_t *coap_new_pdu(void);
+coap_pdu_t *coap_new_pdu();
 
 void coap_delete_pdu(coap_pdu_t *);
 

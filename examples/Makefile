@@ -6,27 +6,27 @@
 # README for terms of use. 
 
 # the library's version
-VERSION:=@PACKAGE_VERSION@
+VERSION:=4.1.1
 
 # tools
-@SET_MAKE@
+
 SHELL = /bin/sh
 MKDIR = mkdir
 
-abs_builddir = @abs_builddir@
-top_builddir = @top_builddir@
-top_srcdir = @top_srcdir@
+abs_builddir = /Users/abannis/REMAP/libcoap-4.1.1/examples
+top_builddir = ..
+top_srcdir = ..
 # files and flags
 PROGRAMS:=coap-server coap-client rd etsi_iot_01 #tiny
 SOURCES:= tiny.c client.c server.c rd.c etsi_iot_01.c
 OBJECTS:= $(patsubst %.c, %.o, $(SOURCES))
 #CFLAGS:=-g -Wall -ansi -pedantic -I..
-CFLAGS:=-g -Wall @CFLAGS@
-CPPFLAGS:=-I$(top_srcdir) @CPPFLAGS@
-DISTDIR?=$(top_builddir)/@PACKAGE_TARNAME@-@PACKAGE_VERSION@
+CFLAGS:=-g -Wall -g -O2
+CPPFLAGS:=-I$(top_srcdir)  -DWITH_POSIX
+DISTDIR?=$(top_builddir)/libcoap-4.1.1
 FILES:=Makefile.in $(SOURCES)
 LDFLAGS:=-L$(top_builddir)
-LDLIBS:=-lcoap @LIBS@
+LDLIBS:=-lcoap 
 libcoap =$(top_builddir)/libcoap.a
 
 .PHONY: clean distclean

@@ -7,7 +7,7 @@
 # README for terms of use. 
 
 AC_PREREQ([2.65])
-AC_INIT([libcoap], [4.1.2])
+AC_INIT([libcoap], [4.1.1])
 AC_CONFIG_SRCDIR([coap.h])
 
 # First check for Contiki build to quit configure before any other test
@@ -67,7 +67,7 @@ AC_ARG_WITH(tests,
 
 AC_ARG_WITH(shared,
   [AS_HELP_STRING([--with-shared],[build shared library])],	
-  [BUILD_SO="BUILD_SO=1" LIBSO_VERSION=AC_PACKAGE_VERSION],
+  [BUILD_SO="BUILD_SO=1"],
   [])
 
 # disambiguate between autoconf generated setups and contiki / lwip setups
@@ -87,7 +87,6 @@ AC_CHECK_FUNCS([memset select socket strcasecmp strrchr getaddrinfo strnlen])
 
 AC_SUBST(TESTS)
 AC_SUBST(BUILD_SO)
-AC_SUBST(LIBSO_VERSION)
 
 AC_CONFIG_HEADERS([config.h])
 

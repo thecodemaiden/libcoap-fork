@@ -1,20 +1,3 @@
-2014-06-18  Olaf Bergmann  <bergmann@tzi.org>
-
-	* mem.c (coap_malloc_type): New functions for allocating memory.
-	On POSIX systems, coap_malloc_type() and coap_free_type() are just
-	wrapper functions for malloc() and free(), while on Contiki and
-	LWIP distinct arrays are used for each type.
-
-2014-03-09  Olaf Bergmann  <bergmann@tzi.org>
-
-	* net.c (coap_cancel): Removed 7.31 again and implemented new
-	method for cancelling observe relationships.
-
-2014-02-25  Olaf Bergmann  <bergmann@tzi.org>
-
-	* net.c (coap_cancel): Handling of 7.31 responses to cancel
-	notifications (see Section 4.6 of draft-ietf-core-observe-12)
-
 2014-02-04  Olaf Bergmann  <bergmann@tzi.org>
 
 	* resource.c (coap_print_link): This function now takes an offset

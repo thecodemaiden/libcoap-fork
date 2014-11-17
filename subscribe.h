@@ -1,7 +1,7 @@
 /* subscribe.h -- subscription handling for CoAP
- *                see draft-ietf-core-observe-12
+ *                see draft-hartke-coap-observe-03
  *
- * Copyright (C) 2010--2012,2014 Olaf Bergmann <bergmann@tzi.org>
+ * Copyright (C) 2010--2012 Olaf Bergmann <bergmann@tzi.org>
  *
  * This file is part of the CoAP library libcoap. Please see
  * README for terms of use. 
@@ -13,24 +13,11 @@
 
 #include "config.h"
 #include "address.h"
-#include "coap_io.h"
 
 /** 
  * @defgroup observe Resource observation
  * @{
  */
-
-/**
- * The value COAP_OBSERVE_ESTABLISH in a GET request indicates 
- * a new observe relationship for (sender address, token) is requested.
- */
-#define COAP_OBSERVE_ESTABLISH 0
-
-/**
- * The value COAP_OBSERVE_CANCEL in a GET request indicates that the
- * observe relationship for (sender address, token) must be cancelled.
- */
-#define COAP_OBSERVE_CANCEL 1
 
 #ifndef COAP_OBS_MAX_NON
 /**
@@ -53,7 +40,6 @@
 /** Subscriber information */
 typedef struct coap_subscription_t {
   struct coap_subscription_t *next; /**< next element in linked list */
-  coap_endpoint_t local_if;	    /**< local communication interface */
   coap_address_t subscriber;	    /**< address and port of subscriber */
 
   unsigned int non:1;		/**< send non-confirmable notifies if @c 1  */
