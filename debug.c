@@ -35,15 +35,15 @@
 #include "net/uip-debug.h"
 #endif
 
-static coap_log_t maxlog = LOG_WARNING;	/* default maximum log level */
+static log_t maxlog = LOG_WARNING;	/* default maximum log level */
 
-coap_log_t 
+log_t 
 coap_get_log_level() {
   return maxlog;
 }
 
 void
-coap_set_log_level(coap_log_t level) {
+coap_set_log_level(log_t level) {
   maxlog = level;
 }
 
@@ -322,7 +322,7 @@ coap_show_pdu(const coap_pdu_t *pdu) {
 
 #ifndef WITH_CONTIKI
 void 
-coap_log_impl(coap_log_t level, const char *format, ...) {
+coap_log_impl(log_t level, const char *format, ...) {
   char timebuf[32];
   coap_tick_t now;
   va_list ap;
@@ -347,7 +347,7 @@ coap_log_impl(coap_log_t level, const char *format, ...) {
 }
 #else /* WITH_CONTIKI */
 void 
-coap_log_impl(coap_log_t level, const char *format, ...) {
+coap_log_impl(log_t level, const char *format, ...) {
   char timebuf[32];
   coap_tick_t now;
   va_list ap;

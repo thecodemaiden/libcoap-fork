@@ -20,20 +20,24 @@
 #endif
 
 #ifdef HAVE_SYSLOG_H
+#define _SYSLOG_LEVELS_
 #include <syslog.h>
-typedef short coap_log_t;
+typedef short log_t;
 #else
+#ifndef _SYSLOG_LEVELS_
+#define _SYSLOG_LEVELS_
 /** Pre-defined log levels akin to what is used in \b syslog. */
 typedef enum { LOG_EMERG=0, LOG_ALERT, LOG_CRIT, LOG_WARNING, 
        LOG_NOTICE, LOG_INFO, LOG_DEBUG
-} coap_log_t;
+} log_t;
+#endif // _SYSLOG_LEVELS_
 #endif
 
 /** Returns the current log level. */
-coap_log_t coap_get_log_level();
+log_t coap_get_log_level();
 
 /** Sets the log level to the specified value. */
-void coap_set_log_level(coap_log_t level);
+void coap_set_log_level(log_t level);
 
 /** 
  * Writes the given text to @c COAP_ERR_FD (for @p level <= @c
@@ -41,7 +45,7 @@ void coap_set_log_level(coap_log_t level);
  * text is output only when @p level is below or equal to the log
  * level that set by coap_set_log_level().
  */
-void coap_log_impl(coap_log_t level, const char *format, ...);
+void coap_log_impl(log_t level, const char *format, ...);
 
 #ifndef coap_log
 #define coap_log(...) coap_log_impl(__VA_ARGS__)
